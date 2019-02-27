@@ -181,7 +181,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, rando
 
 # We are going to test three types of resampling methods: [random undersampling](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.under_sampling.RandomUnderSampler.html#imblearn.under_sampling.RandomUnderSampler), [random oversampling](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.over_sampling.RandomOverSampler.html#imblearn.over_sampling.RandomOverSampler) and [Synthetic Minority Over-sampling (SMOTE)](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.over_sampling.SMOTE.html#imblearn.over_sampling.SMOTE). The image below depicts how undersampling and oversampling works and it is very intuitive to understand. SMOTE is similar to oversampling but instead of copying the same original points randomly, the algorithm creates new points close to the original ones.
 
-# ![image.png](attachment:image.png)
+# <img src="Images/resampling.png">
+# 
 # [Image Source](https://www.kaggle.com/rafjaa/resampling-strategies-for-imbalanced-datasets)
 
 # ### Random undersampling
@@ -236,7 +237,9 @@ plt.show()
 
 # A quick explanation of how SMOTE works: it consists of synthesizing elements for the minority class using the existing ones. It randomly chooses a point from the minority class and computes the k-nearest neighbors (default = 5) for this point. The synthetic points are added between the chosen point and its neighbors by choosing a factor between 0 and 1 to multiply the distance. This process can be seen below.
 
-# ![image.png](attachment:image.png)
+# <img src="Images/smote.png">
+# 
+# [Image Source](https://www.kaggle.com/rafjaa/resampling-strategies-for-imbalanced-datasets)
 
 # In[453]:
 
