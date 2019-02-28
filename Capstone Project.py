@@ -36,7 +36,7 @@ table = pd.read_csv('creditcard.csv')
 
 # # Exploratory data analysis
 
-# In[31]:
+# In[3]:
 
 
 table.isnull().sum().all()
@@ -44,31 +44,31 @@ table.isnull().sum().all()
 
 # Null elements are not present in the dataset.
 
-# In[32]:
+# In[4]:
 
 
 table.head()
 
 
-# In[33]:
+# In[5]:
 
 
 table.tail()
 
 
-# In[34]:
+# In[6]:
 
 
 table.info()
 
 
-# In[35]:
+# In[7]:
 
 
 table.describe()
 
 
-# In[36]:
+# In[8]:
 
 
 plt.bar(['Non-Fraud','Fraud'], table['Class'].value_counts(), color=['b','r'])
@@ -86,7 +86,7 @@ plt.show()
 
 # The dataset has only two classes: fraud or non-fraud. The classes are highly umbalanced with 99.83% of observations belonging to non-fraudulent transactions and only 0.17% of observations labeled as fraudulent. This issue will be adressed later with a method for balancing classes.
 
-# In[37]:
+# In[9]:
 
 
 plt.scatter(table['Time']/(60*60), table['Class'])
@@ -99,7 +99,7 @@ plt.show()
 
 # The data was collected over the period of 2 days and, apparently, the 'Time' variable isn't a good predictor for frauds. As seen above, the pattern for both non-fradulent and fraudulent transactions seems to be random regarding the hour of the day.
 
-# In[38]:
+# In[10]:
 
 
 plt.boxplot(table['Amount'], labels = ['Boxplot'])
@@ -120,7 +120,7 @@ print('Number of outliers above the upper bound: ', amount[amount['Amount'] > up
 
 # 31904 outliers found using the interquartile range method, which represents 11.2% of the observations. Removing them from the dataset would be a bad idea due to the loss of a large amount of information for the machine learning models.
 
-# In[39]:
+# In[11]:
 
 
 table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
@@ -128,7 +128,7 @@ table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
 
 # In addition to that, only 91 out of 31904 outliers are classified as frauds.
 
-# In[40]:
+# In[12]:
 
 
 plt.scatter(table['Amount'], table['Class'])
@@ -137,7 +137,7 @@ plt.ylabel('Class')
 plt.show()
 
 
-# In[41]:
+# In[13]:
 
 
 target_0 = table.loc[table['Class'] == 0]
@@ -152,7 +152,7 @@ plt.ylabel('Density of probability')
 plt.show()
 
 
-# In[42]:
+# In[14]:
 
 
 table.loc[table['Class'] == 1]['Amount'].describe()
@@ -160,13 +160,13 @@ table.loc[table['Class'] == 1]['Amount'].describe()
 
 # We can see that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.
 
-# In[43]:
+# In[15]:
 
 
 heatmap = sns.heatmap(table.corr(method='spearman'))
 
 
-# In[44]:
+# In[16]:
 
 
 table.corrwith(table.Class, method='spearman').plot.bar(
@@ -181,14 +181,14 @@ plt.show()
 
 # Before balancing the classes we need to split the observations into a training set and a testing set. ***This is extremely important!*** We can only balance the classes after we set some observations aside to be used as a test set! Otherwise, the models might use part of the test data during the training, which will lead to overfitting. Let's be smart and avoid that! :)
 
-# In[10]:
+# In[17]:
 
 
 y = table['Class']
 X = table.drop(columns=['Class'])
 
 
-# In[11]:
+# In[18]:
 
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state=42)
@@ -202,7 +202,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, rando
 
 # ### Random undersampling
 
-# In[12]:
+# In[19]:
 
 
 rus = RandomUnderSampler(sampling_strategy='auto', random_state=42, replacement=False)
@@ -211,7 +211,7 @@ X_rus, y_rus = rus.fit_resample(X_train, y_train)
 
 # Checking If classes are balanced:
 
-# In[13]:
+# In[20]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_rus)[0], Counter(y_rus)[1]], color=['b','r'])
@@ -224,7 +224,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[14]:
+# In[21]:
 
 
 assert Counter(y_rus)[1] == Counter(y_train)[1] #Checking if they have the same number of fraud cases
@@ -232,7 +232,7 @@ assert Counter(y_rus)[1] == Counter(y_train)[1] #Checking if they have the same 
 
 # ### Random oversampling
 
-# In[15]:
+# In[22]:
 
 
 ros = RandomOverSampler(sampling_strategy='auto', random_state=42)
@@ -241,7 +241,7 @@ X_ros, y_ros = ros.fit_resample(X_train, y_train)
 
 # Checking If classes are balanced:
 
-# In[16]:
+# In[23]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_ros)[0], Counter(y_ros)[1]], color=['b','r'])
@@ -254,7 +254,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[17]:
+# In[24]:
 
 
 assert Counter(y_ros)[0] == Counter(y_train)[0] #Checking if they have the same number of non-fraud cases
@@ -268,14 +268,14 @@ assert Counter(y_ros)[0] == Counter(y_train)[0] #Checking if they have the same 
 # 
 # [Image Source](https://www.kaggle.com/rafjaa/resampling-strategies-for-imbalanced-datasets)
 
-# In[18]:
+# In[25]:
 
 
 smote = SMOTE(sampling_strategy='auto', random_state=42)
 X_smote, y_smote = smote.fit_resample(X_train, y_train)
 
 
-# In[19]:
+# In[26]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_smote)[0], Counter(y_smote)[1]], color=['b','r'])
@@ -288,7 +288,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[20]:
+# In[27]:
 
 
 assert Counter(y_smote)[0] == Counter(y_train)[0] #Checking if they have the same number of non-fraud cases
@@ -296,7 +296,7 @@ assert Counter(y_smote)[0] == Counter(y_train)[0] #Checking if they have the sam
 
 # #### Checking the difference between random oversampling and SMOTE
 
-# In[21]:
+# In[28]:
 
 
 def plot_2d_space(X, y, label='Classes'):
@@ -312,7 +312,7 @@ def plot_2d_space(X, y, label='Classes'):
 
 # Because the dataset has many features and our graphs will be 2D, we will reduce the size of the dataset using Principal Component Analysis (PCA):
 
-# In[22]:
+# In[29]:
 
 
 std_scale = StandardScaler().fit(X_train)
@@ -331,7 +331,7 @@ plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using S
 
 # Before we begin let's first create a function to perform feature scaling because some models need this prior to fitting.
 
-# In[23]:
+# In[30]:
 
 
 def feature_scaling(X_train, X_test=X_test):
@@ -341,7 +341,7 @@ def feature_scaling(X_train, X_test=X_test):
     return X_train_std, X_test_std
 
 
-# In[24]:
+# In[31]:
 
 
 X_train_rus_std, X_test_rus_std = feature_scaling(X_rus)
@@ -349,7 +349,7 @@ X_train_ros_std, X_test_ros_std = feature_scaling(X_ros)
 X_train_smote_std, X_test_smote_std = feature_scaling(X_smote)
 
 
-# In[25]:
+# In[65]:
 
 
 classifiers = []
@@ -361,8 +361,11 @@ classifiers.append(('Naive Bayes', GaussianNB()))
 classifiers.append(('Decision Tree', DecisionTreeClassifier(random_state=42)))
 classifiers.append(('Random Forest', RandomForestClassifier(random_state=42)))
 
+#Ensemble classifier
+eclf = VotingClassifier(estimators=classifiers, voting='soft', weights=[1, 1, 1, 5])
 
-# In[26]:
+
+# In[69]:
 
 
 from sklearn import svm
@@ -370,7 +373,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 from scipy import interp
 
-def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
+def plot_ROC_curve(classifier, X, y, cv_n_splits=5, eclf=eclf):
     '''Plots the ROC curve with cross validation'''
     
     # Classification and ROC analysis
@@ -394,7 +397,7 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
         roc_auc = auc(fpr, tpr)
         aucs.append(roc_auc)
         plt.plot(fpr, tpr, lw=1, alpha=0.3,
-                 label='ROC fold %d (AUC = %0.4f)' % (i, roc_auc))
+                 label='ROC fold %d (AUC = %0.7f)' % (i, roc_auc))
 
         i += 1
     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
@@ -405,7 +408,7 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
     mean_auc = auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
     plt.plot(mean_fpr, mean_tpr, color='b',
-             label='Mean ROC (AUC = %0.4f $\pm$ %0.4f)' % (mean_auc, std_auc),
+             label='Mean ROC (AUC = %0.7f $\pm$ %0.7f)' % (mean_auc, std_auc),
              lw=2, alpha=.8)
 
     std_tpr = np.std(tprs, axis=0)
@@ -425,27 +428,45 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
 
 # #### Results using undersampling
 
-# In[27]:
+# In[70]:
 
 
 for clf in classifiers:
     plot_ROC_curve(clf, X_train_rus_std, y_rus) 
 
 
+# In[71]:
+
+
+plot_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus)
+
+
 # #### Results using oversampling
 
-# In[28]:
+# In[72]:
 
 
 for clf in classifiers:
     plot_ROC_curve(clf, X_train_ros_std, y_ros)
 
 
+# In[73]:
+
+
+plot_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros)
+
+
 # #### Results using SMOTE
 
-# In[30]:
+# In[74]:
 
 
 for clf in classifiers:
-    plot_ROC_curve(clf, X_train_smote_std, y_smote) 
+    plot_ROC_curve(clf, X_train_smote_std, y_smote)
+
+
+# In[75]:
+
+
+plot_ROC_curve(('Ensemble model', eclf), X_train_smote_std, y_smote)
 
