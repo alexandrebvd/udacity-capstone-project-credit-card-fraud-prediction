@@ -22,6 +22,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from collections import Counter
 from scipy import interp
+import itertools
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 import warnings
@@ -365,10 +366,8 @@ classifiers.append(('Random Forest', RandomForestClassifier(random_state=42)))
 eclf = VotingClassifier(estimators=classifiers, voting='soft', weights=[1, 1, 1, 5])
 
 
-# In[141]:
+# In[147]:
 
-
-import itertools
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -391,7 +390,7 @@ def plot_confusion_matrix(cm, classes,
     #else:
     #    print('Confusion matrix, without normalization')
 
-    print(cm)
+    #print(cm)
 
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
@@ -404,7 +403,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-# In[142]:
+# In[162]:
 
 
 from sklearn import svm
@@ -412,7 +411,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 from scipy import interp
 
-def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
+def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
     '''Plots the ROC curve with cross validation'''
     
     # Classification and ROC analysis
@@ -426,26 +425,19 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
     aucs = []
     mean_fpr = np.linspace(0, 1, 100)
     class_names = [ 'Non-Fraud', 'Fraud']
+    confusion_matrix_total = [[0, 0], [0, 0]]
 
     i = 0
-    
-    for train_index, test_index in cv.split(X, y):
 
-        X_tr, X_tes = X[train_index], X[test_index]
-        y_tr, y_tes = y[train_index], y[test_index] 
+    for train, test in cv.split(X, y):
+        
+        X_tr, X_tes = X[train], X[test]
+        y_tr, y_tes = y[train], y[test]
 
         y_pred=classifier.predict(X_tes)
         cnf_matrix = confusion_matrix(y_tes, y_pred)
+        confusion_matrix_total += cnf_matrix
         np.set_printoptions(precision=2)
-
-        # Plot non-normalized confusion matrix
-        plt.figure()
-        plot_confusion_matrix(cnf_matrix, classes=class_names,
-                          title='Confusion matrix')
-
-        plt.show()
-
-    for train, test in cv.split(X, y):
         
         probas_ = classifier.fit(X[train], y[train]).predict_proba(X[test])
         # Compute ROC curve and area the curve
@@ -481,21 +473,26 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
     plt.title('ROC curve - model: ' + name)
     plt.legend(loc="lower right")
     plt.show()
+    
+    # Plot non-normalized confusion matrix
+    plt.figure()
+    plot_confusion_matrix(confusion_matrix_total, classes=class_names, title='Confusion matrix - model: ' + name)
+    plt.show()
 
 
 # #### Results using undersampling
 
-# In[143]:
+# In[163]:
 
 
 for clf in classifiers:
-    plot_ROC_curve(clf, X_train_rus_std, y_rus) 
+    plot_CM_and_ROC_curve(clf, X_train_rus_std, y_rus) 
 
 
-# In[71]:
+# In[164]:
 
 
-plot_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus)
 
 
 # #### Results using oversampling
