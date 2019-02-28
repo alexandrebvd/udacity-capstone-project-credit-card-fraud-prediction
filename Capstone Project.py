@@ -36,7 +36,7 @@ table = pd.read_csv('creditcard.csv')
 
 # # Exploratory data analysis
 
-# In[ ]:
+# In[31]:
 
 
 table.isnull().sum().all()
@@ -44,31 +44,31 @@ table.isnull().sum().all()
 
 # Null elements are not present in the dataset.
 
-# In[ ]:
+# In[32]:
 
 
 table.head()
 
 
-# In[ ]:
+# In[33]:
 
 
 table.tail()
 
 
-# In[ ]:
+# In[34]:
 
 
 table.info()
 
 
-# In[ ]:
+# In[35]:
 
 
 table.describe()
 
 
-# In[3]:
+# In[36]:
 
 
 plt.bar(['Non-Fraud','Fraud'], table['Class'].value_counts(), color=['b','r'])
@@ -86,7 +86,7 @@ plt.show()
 
 # The dataset has only two classes: fraud or non-fraud. The classes are highly umbalanced with 99.83% of observations belonging to non-fraudulent transactions and only 0.17% of observations labeled as fraudulent. This issue will be adressed later with a method for balancing classes.
 
-# In[4]:
+# In[37]:
 
 
 plt.scatter(table['Time']/(60*60), table['Class'])
@@ -99,7 +99,7 @@ plt.show()
 
 # The data was collected over the period of 2 days and, apparently, the 'Time' variable isn't a good predictor for frauds. As seen above, the pattern for both non-fradulent and fraudulent transactions seems to be random regarding the hour of the day.
 
-# In[5]:
+# In[38]:
 
 
 plt.boxplot(table['Amount'], labels = ['Boxplot'])
@@ -120,7 +120,7 @@ print('Number of outliers above the upper bound: ', amount[amount['Amount'] > up
 
 # 31904 outliers found using the interquartile range method, which represents 11.2% of the observations. Removing them from the dataset would be a bad idea due to the loss of a large amount of information for the machine learning models.
 
-# In[6]:
+# In[39]:
 
 
 table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
@@ -128,7 +128,7 @@ table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
 
 # In addition to that, only 91 out of 31904 outliers are classified as frauds.
 
-# In[7]:
+# In[40]:
 
 
 plt.scatter(table['Amount'], table['Class'])
@@ -137,7 +137,7 @@ plt.ylabel('Class')
 plt.show()
 
 
-# In[8]:
+# In[41]:
 
 
 target_0 = table.loc[table['Class'] == 0]
@@ -152,7 +152,7 @@ plt.ylabel('Density of probability')
 plt.show()
 
 
-# In[9]:
+# In[42]:
 
 
 table.loc[table['Class'] == 1]['Amount'].describe()
@@ -160,13 +160,13 @@ table.loc[table['Class'] == 1]['Amount'].describe()
 
 # We can see that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.
 
-# In[ ]:
+# In[43]:
 
 
 heatmap = sns.heatmap(table.corr(method='spearman'))
 
 
-# In[ ]:
+# In[44]:
 
 
 table.corrwith(table.Class, method='spearman').plot.bar(
