@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[117]:
+# In[1]:
 
 
 import pandas as pd
@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -20,6 +21,7 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_curve, 
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from collections import Counter
+from scipy import interp
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 import warnings
@@ -34,7 +36,7 @@ table = pd.read_csv('creditcard.csv')
 
 # # Exploratory data analysis
 
-# In[3]:
+# In[ ]:
 
 
 table.isnull().sum().all()
@@ -42,31 +44,31 @@ table.isnull().sum().all()
 
 # Null elements are not present in the dataset.
 
-# In[4]:
+# In[ ]:
 
 
 table.head()
 
 
-# In[5]:
+# In[ ]:
 
 
 table.tail()
 
 
-# In[6]:
+# In[ ]:
 
 
 table.info()
 
 
-# In[7]:
+# In[ ]:
 
 
 table.describe()
 
 
-# In[8]:
+# In[3]:
 
 
 plt.bar(['Non-Fraud','Fraud'], table['Class'].value_counts(), color=['b','r'])
@@ -84,7 +86,7 @@ plt.show()
 
 # The dataset has only two classes: fraud or non-fraud. The classes are highly umbalanced with 99.83% of observations belonging to non-fraudulent transactions and only 0.17% of observations labeled as fraudulent. This issue will be adressed later with a method for balancing classes.
 
-# In[9]:
+# In[4]:
 
 
 plt.scatter(table['Time']/(60*60), table['Class'])
@@ -97,7 +99,7 @@ plt.show()
 
 # The data was collected over the period of 2 days and, apparently, the 'Time' variable isn't a good predictor for frauds. As seen above, the pattern for both non-fradulent and fraudulent transactions seems to be random regarding the hour of the day.
 
-# In[10]:
+# In[5]:
 
 
 plt.boxplot(table['Amount'], labels = ['Boxplot'])
@@ -118,7 +120,7 @@ print('Number of outliers above the upper bound: ', amount[amount['Amount'] > up
 
 # 31904 outliers found using the interquartile range method, which represents 11.2% of the observations. Removing them from the dataset would be a bad idea due to the loss of a large amount of information for the machine learning models.
 
-# In[11]:
+# In[6]:
 
 
 table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
@@ -126,7 +128,7 @@ table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
 
 # In addition to that, only 91 out of 31904 outliers are classified as frauds.
 
-# In[12]:
+# In[7]:
 
 
 plt.scatter(table['Amount'], table['Class'])
@@ -135,7 +137,7 @@ plt.ylabel('Class')
 plt.show()
 
 
-# In[13]:
+# In[8]:
 
 
 target_0 = table.loc[table['Class'] == 0]
@@ -150,7 +152,7 @@ plt.ylabel('Density of probability')
 plt.show()
 
 
-# In[14]:
+# In[9]:
 
 
 table.loc[table['Class'] == 1]['Amount'].describe()
@@ -158,13 +160,13 @@ table.loc[table['Class'] == 1]['Amount'].describe()
 
 # We can see that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.
 
-# In[15]:
+# In[ ]:
 
 
 heatmap = sns.heatmap(table.corr(method='spearman'))
 
 
-# In[43]:
+# In[ ]:
 
 
 table.corrwith(table.Class, method='spearman').plot.bar(
@@ -179,14 +181,14 @@ plt.show()
 
 # Before balancing the classes we need to split the observations into a training set and a testing set. ***This is extremely important!*** We can only balance the classes after we set some observations aside to be used as a test set! Otherwise, the models might use part of the test data during the training, which will lead to overfitting. Let's be smart and avoid that! :)
 
-# In[16]:
+# In[10]:
 
 
 y = table['Class']
 X = table.drop(columns=['Class'])
 
 
-# In[17]:
+# In[11]:
 
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state=42)
@@ -200,7 +202,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, rando
 
 # ### Random undersampling
 
-# In[18]:
+# In[12]:
 
 
 rus = RandomUnderSampler(sampling_strategy='auto', random_state=42, replacement=False)
@@ -209,7 +211,7 @@ X_rus, y_rus = rus.fit_resample(X_train, y_train)
 
 # Checking If classes are balanced:
 
-# In[26]:
+# In[13]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_rus)[0], Counter(y_rus)[1]], color=['b','r'])
@@ -222,7 +224,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[27]:
+# In[14]:
 
 
 assert Counter(y_rus)[1] == Counter(y_train)[1] #Checking if they have the same number of fraud cases
@@ -230,7 +232,7 @@ assert Counter(y_rus)[1] == Counter(y_train)[1] #Checking if they have the same 
 
 # ### Random oversampling
 
-# In[28]:
+# In[15]:
 
 
 ros = RandomOverSampler(sampling_strategy='auto', random_state=42)
@@ -239,7 +241,7 @@ X_ros, y_ros = ros.fit_resample(X_train, y_train)
 
 # Checking If classes are balanced:
 
-# In[29]:
+# In[16]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_ros)[0], Counter(y_ros)[1]], color=['b','r'])
@@ -252,7 +254,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[30]:
+# In[17]:
 
 
 assert Counter(y_ros)[0] == Counter(y_train)[0] #Checking if they have the same number of non-fraud cases
@@ -266,14 +268,14 @@ assert Counter(y_ros)[0] == Counter(y_train)[0] #Checking if they have the same 
 # 
 # [Image Source](https://www.kaggle.com/rafjaa/resampling-strategies-for-imbalanced-datasets)
 
-# In[31]:
+# In[18]:
 
 
 smote = SMOTE(sampling_strategy='auto', random_state=42)
 X_smote, y_smote = smote.fit_resample(X_train, y_train)
 
 
-# In[32]:
+# In[19]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_smote)[0], Counter(y_smote)[1]], color=['b','r'])
@@ -286,7 +288,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[33]:
+# In[20]:
 
 
 assert Counter(y_smote)[0] == Counter(y_train)[0] #Checking if they have the same number of non-fraud cases
@@ -294,7 +296,7 @@ assert Counter(y_smote)[0] == Counter(y_train)[0] #Checking if they have the sam
 
 # #### Checking the difference between random oversampling and SMOTE
 
-# In[34]:
+# In[21]:
 
 
 def plot_2d_space(X, y, label='Classes'):
@@ -310,7 +312,7 @@ def plot_2d_space(X, y, label='Classes'):
 
 # Because the dataset has many features and our graphs will be 2D, we will reduce the size of the dataset using Principal Component Analysis (PCA):
 
-# In[35]:
+# In[22]:
 
 
 std_scale = StandardScaler().fit(X_train)
@@ -329,7 +331,7 @@ plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using S
 
 # Before we begin let's first create a function to perform feature scaling because some models need this prior to fitting.
 
-# In[67]:
+# In[23]:
 
 
 def feature_scaling(X_train, X_test=X_test):
@@ -339,7 +341,7 @@ def feature_scaling(X_train, X_test=X_test):
     return X_train_std, X_test_std
 
 
-# In[68]:
+# In[24]:
 
 
 X_train_rus_std, X_test_rus_std = feature_scaling(X_rus)
@@ -347,26 +349,26 @@ X_train_ros_std, X_test_ros_std = feature_scaling(X_ros)
 X_train_smote_std, X_test_smote_std = feature_scaling(X_smote)
 
 
-# ## Classification algorithms
-
-# In[ ]:
+# In[25]:
 
 
 classifiers = []
 
 classifiers.append(('Logistic Regression', LogisticRegression(random_state=42)))
 classifiers.append(('Naive Bayes', GaussianNB()))
-classifiers.append(('KNN', KNeighborsClassifier()))
-classifiers.append(('SVM', SVC(random_state=42)))
+#classifiers.append(('KNN', KNeighborsClassifier()))
+#classifiers.append(('SVM', SVC(random_state=42, probability=True)))
+classifiers.append(('Decision Tree', DecisionTreeClassifier(random_state=42)))
 classifiers.append(('Random Forest', RandomForestClassifier(random_state=42)))
 
 
-# In[126]:
+# In[26]:
 
 
 from sklearn import svm
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
+from scipy import interp
 
 def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
     '''Plots the ROC curve with cross validation'''
@@ -375,7 +377,8 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
 
     # Run classifier with cross-validation and plot ROC curves
     cv = StratifiedKFold(n_splits=cv_n_splits)
-    classifier = classifier
+    name = classifier[0]
+    classifier = classifier[1]
 
     tprs = []
     aucs = []
@@ -391,7 +394,7 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
         roc_auc = auc(fpr, tpr)
         aucs.append(roc_auc)
         plt.plot(fpr, tpr, lw=1, alpha=0.3,
-                 label='ROC fold %d (AUC = %0.5f)' % (i, roc_auc))
+                 label='ROC fold %d (AUC = %0.4f)' % (i, roc_auc))
 
         i += 1
     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
@@ -402,20 +405,47 @@ def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
     mean_auc = auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
     plt.plot(mean_fpr, mean_tpr, color='b',
-             label=r'Mean ROC (AUC = %0.2f $\pm$ %0.5f)' % (mean_auc, std_auc),
+             label='Mean ROC (AUC = %0.4f $\pm$ %0.4f)' % (mean_auc, std_auc),
              lw=2, alpha=.8)
 
     std_tpr = np.std(tprs, axis=0)
     tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
     tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
     plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                     label=r'$\pm$ 1 std. dev.')
+                     label='$\pm$ 1 std. dev.')
 
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
+    plt.title('ROC curve - model: ' + name)
     plt.legend(loc="lower right")
     plt.show()
+
+
+# #### Results using undersampling
+
+# In[27]:
+
+
+for clf in classifiers:
+    plot_ROC_curve(clf, X_train_rus_std, y_rus) 
+
+
+# #### Results using oversampling
+
+# In[28]:
+
+
+for clf in classifiers:
+    plot_ROC_curve(clf, X_train_ros_std, y_ros)
+
+
+# #### Results using SMOTE
+
+# In[30]:
+
+
+for clf in classifiers:
+    plot_ROC_curve(clf, X_train_smote_std, y_smote) 
 
