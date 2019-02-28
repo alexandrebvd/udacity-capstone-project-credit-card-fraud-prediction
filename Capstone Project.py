@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[117]:
 
 
 import pandas as pd
@@ -10,17 +10,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import RandomOverSampler, SMOTE
 from collections import Counter
 get_ipython().run_line_magic('matplotlib', 'inline')
+
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 # In[2]:
@@ -161,7 +164,16 @@ table.loc[table['Class'] == 1]['Amount'].describe()
 heatmap = sns.heatmap(table.corr(method='spearman'))
 
 
-# We can see that all features have very low correlation coefficients among each other.
+# In[43]:
+
+
+table.corrwith(table.Class, method='spearman').plot.bar(
+        figsize = (20, 10), title = "Correlation with class", fontsize = 15,
+        rot = 45, grid = True, color=['blue'])
+plt.show()
+
+
+# We can see that all features have very low correlation coefficients among each other, and especially low correlation with the 'Class' feature. This was already expected since the data was processed using PCA.
 
 # # Balancing the classes
 
@@ -317,7 +329,7 @@ plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using S
 
 # Before we begin let's first create a function to perform feature scaling because some models need this prior to fitting.
 
-# In[ ]:
+# In[67]:
 
 
 def feature_scaling(X_train, X_test=X_test):
@@ -327,16 +339,83 @@ def feature_scaling(X_train, X_test=X_test):
     return X_train_std, X_test_std
 
 
+# In[68]:
+
+
+X_train_rus_std, X_test_rus_std = feature_scaling(X_rus)
+X_train_ros_std, X_test_ros_std = feature_scaling(X_ros)
+X_train_smote_std, X_test_smote_std = feature_scaling(X_smote)
+
+
 # ## Classification algorithms
 
 # In[ ]:
 
 
-models = []
+classifiers = []
 
-models.append(('LR', LogisticRegression()))
-models.append(('KNN', KNeighborsClassifier()))
-models.append(('SVM', SVC()))
-models.append(('GNB', GaussianNB()))
-models.append(('RF', RandomForestClassifier()))
+classifiers.append(('Logistic Regression', LogisticRegression(random_state=42)))
+classifiers.append(('Naive Bayes', GaussianNB()))
+classifiers.append(('KNN', KNeighborsClassifier()))
+classifiers.append(('SVM', SVC(random_state=42)))
+classifiers.append(('Random Forest', RandomForestClassifier(random_state=42)))
+
+
+# In[126]:
+
+
+from sklearn import svm
+from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import StratifiedKFold
+
+def plot_ROC_curve(classifier, X, y, cv_n_splits=5):
+    '''Plots the ROC curve with cross validation'''
+    
+    # Classification and ROC analysis
+
+    # Run classifier with cross-validation and plot ROC curves
+    cv = StratifiedKFold(n_splits=cv_n_splits)
+    classifier = classifier
+
+    tprs = []
+    aucs = []
+    mean_fpr = np.linspace(0, 1, 100)
+
+    i = 0
+    for train, test in cv.split(X, y):
+        probas_ = classifier.fit(X[train], y[train]).predict_proba(X[test])
+        # Compute ROC curve and area the curve
+        fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
+        tprs.append(interp(mean_fpr, fpr, tpr))
+        tprs[-1][0] = 0.0
+        roc_auc = auc(fpr, tpr)
+        aucs.append(roc_auc)
+        plt.plot(fpr, tpr, lw=1, alpha=0.3,
+                 label='ROC fold %d (AUC = %0.5f)' % (i, roc_auc))
+
+        i += 1
+    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+             label='Chance', alpha=.8)
+
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+    mean_auc = auc(mean_fpr, mean_tpr)
+    std_auc = np.std(aucs)
+    plt.plot(mean_fpr, mean_tpr, color='b',
+             label=r'Mean ROC (AUC = %0.2f $\pm$ %0.5f)' % (mean_auc, std_auc),
+             lw=2, alpha=.8)
+
+    std_tpr = np.std(tprs, axis=0)
+    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+                     label=r'$\pm$ 1 std. dev.')
+
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic example')
+    plt.legend(loc="lower right")
+    plt.show()
 
