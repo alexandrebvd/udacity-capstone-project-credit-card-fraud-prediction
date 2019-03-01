@@ -182,7 +182,7 @@ plt.show()
 
 # Before balancing the classes we need to split the observations into a training set and a testing set. ***This is extremely important!*** We can only balance the classes after we set some observations aside to be used as a test set! Otherwise, the models might use part of the test data during the training, which will lead to overfitting. Let's be smart and avoid that! :)
 
-# In[17]:
+# In[202]:
 
 
 y = table['Class']
@@ -203,16 +203,16 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, rando
 
 # ### Random undersampling
 
-# In[19]:
+# In[203]:
 
 
 rus = RandomUnderSampler(sampling_strategy='auto', random_state=42, replacement=False)
-X_rus, y_rus = rus.fit_resample(X_train, y_train)
+X_rus, y_rus = rus.fit_resample(X, y)
 
 
 # Checking If classes are balanced:
 
-# In[20]:
+# In[204]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_rus)[0], Counter(y_rus)[1]], color=['b','r'])
@@ -225,7 +225,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[21]:
+# In[205]:
 
 
 assert Counter(y_rus)[1] == Counter(y_train)[1] #Checking if they have the same number of fraud cases
@@ -403,7 +403,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-# In[162]:
+# In[198]:
 
 
 from sklearn import svm
@@ -424,31 +424,32 @@ def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
     tprs = []
     aucs = []
     mean_fpr = np.linspace(0, 1, 100)
-    class_names = [ 'Non-Fraud', 'Fraud']
+    class_names = ['Non-Fraud', 'Fraud']
     confusion_matrix_total = [[0, 0], [0, 0]]
 
     i = 0
 
     for train, test in cv.split(X, y):
         
-        X_tr, X_tes = X[train], X[test]
-        y_tr, y_tes = y[train], y[test]
+        X_train, X_test = X[train], X[test]
+        y_train, y_test = y[train], y[test]
 
-        y_pred=classifier.predict(X_tes)
-        cnf_matrix = confusion_matrix(y_tes, y_pred)
+        y_pred=classifier.predict(X_test)
+        cnf_matrix = confusion_matrix(y_test, y_pred)
         confusion_matrix_total += cnf_matrix
         np.set_printoptions(precision=2)
         
-        probas_ = classifier.fit(X[train], y[train]).predict_proba(X[test])
+        probas_ = classifier.fit(X_train, y_train).predict_proba(X_test)
         # Compute ROC curve and area the curve
-        fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
+        fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
         tprs.append(interp(mean_fpr, fpr, tpr))
         tprs[-1][0] = 0.0
         roc_auc = auc(fpr, tpr)
         aucs.append(roc_auc)
         plt.plot(fpr, tpr, lw=1, alpha=0.3, label='ROC fold %d (AUC = %0.7f)' % (i+1, roc_auc))
-
+        
         i += 1
+        
     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
              label='Chance', alpha=.8)
 
@@ -474,22 +475,30 @@ def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
     plt.legend(loc="lower right")
     plt.show()
     
+    #Print precision and recall
+    tn, fp = confusion_matrix_total.tolist()[0]
+    fn, tp = confusion_matrix_total.tolist()[1]
+    precision = tp/(tp+fp)
+    recall = tp/(tp+fn)
+    print('Precision = {:2.2f}%'.format(precision*100))
+    print('Recall = {:2.2f}%'.format(recall*100))
+    
     # Plot non-normalized confusion matrix
     plt.figure()
     plot_confusion_matrix(confusion_matrix_total, classes=class_names, title='Confusion matrix - model: ' + name)
     plt.show()
 
 
-# #### Results using undersampling
+# #### Results using random undersampling
 
-# In[163]:
+# In[199]:
 
 
 for clf in classifiers:
     plot_CM_and_ROC_curve(clf, X_train_rus_std, y_rus) 
 
 
-# In[164]:
+# In[200]:
 
 
 plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus)
@@ -497,17 +506,17 @@ plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus)
 
 # #### Results using oversampling
 
-# In[72]:
+# In[201]:
 
 
 for clf in classifiers:
-    plot_ROC_curve(clf, X_train_ros_std, y_ros)
+    plot_CM_and_ROC_curve(clf, X_train_ros_std, y_ros)
 
 
 # In[73]:
 
 
-plot_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros)
 
 
 # #### Results using SMOTE
@@ -516,11 +525,11 @@ plot_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros)
 
 
 for clf in classifiers:
-    plot_ROC_curve(clf, X_train_smote_std, y_smote)
+    plot_CM_and_ROC_curve(clf, X_train_smote_std, y_smote)
 
 
 # In[75]:
 
 
-plot_ROC_curve(('Ensemble model', eclf), X_train_smote_std, y_smote)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_smote_std, y_smote)
 
