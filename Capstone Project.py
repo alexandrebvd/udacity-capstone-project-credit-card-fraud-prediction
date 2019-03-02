@@ -1,6 +1,22 @@
 
 # coding: utf-8
 
+# # Table of contents
+# - [Exploraroty Data Analysis](#EDA)
+# 
+# - [Balancing the classes](#Balancing)
+# 
+#     - [Random Under Sampling](#rus)
+#     - [Random Over Sampling](#ros) 
+#     - [SMOTE](#smote)
+#         - [Checking the difference between random oversampling and SMOTE](#rosxsmote)
+# 
+# - [Models and Results](#models)
+#     - [Results using random under sampling](#models-rus)
+#     - [Results using random over sampling](#models-ros)
+#     - [Results using SMOTE](#models-smote)
+# 
+
 # In[1]:
 
 
@@ -34,6 +50,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 table = pd.read_csv('creditcard.csv')
 
+
+# <a id='EDA'></a>
 
 # # Exploratory data analysis
 
@@ -178,11 +196,13 @@ plt.show()
 
 # We can see that all features have very low correlation coefficients among each other, and especially low correlation with the 'Class' feature. This was already expected since the data was processed using PCA.
 
+# <a id='Balancing'></a>
+
 # # Balancing the classes
 
 # Before balancing the classes we need to split the observations into a training set and a testing set. ***This is extremely important!*** We can only balance the classes after we set some observations aside to be used as a test set! Otherwise, the models might use part of the test data during the training, which will lead to overfitting. Let's be smart and avoid that! :)
 
-# In[202]:
+# In[17]:
 
 
 y = table['Class']
@@ -192,8 +212,10 @@ X = table.drop(columns=['Class'])
 # In[18]:
 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, stratify=y, random_state=42)
 
+
+# The data was split in train and test sets maintaining the original rate of frauds to non-frauds in each set by using 'stratify=y' in the function train_test_split.
 
 # We are going to test three types of resampling methods: [random undersampling](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.under_sampling.RandomUnderSampler.html#imblearn.under_sampling.RandomUnderSampler), [random oversampling](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.over_sampling.RandomOverSampler.html#imblearn.over_sampling.RandomOverSampler) and [Synthetic Minority Over-sampling (SMOTE)](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.over_sampling.SMOTE.html#imblearn.over_sampling.SMOTE). The image below depicts how undersampling and oversampling works and it is very intuitive to understand. SMOTE is similar to oversampling but instead of copying the same original points randomly, the algorithm creates new points close to the original ones.
 
@@ -201,18 +223,20 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, rando
 # 
 # [Image Source](https://www.kaggle.com/rafjaa/resampling-strategies-for-imbalanced-datasets)
 
-# ### Random undersampling
+# <a id='rus'></a>
 
-# In[203]:
+# ## Random undersampling
+
+# In[19]:
 
 
 rus = RandomUnderSampler(sampling_strategy='auto', random_state=42, replacement=False)
-X_rus, y_rus = rus.fit_resample(X, y)
+X_rus, y_rus = rus.fit_resample(X_train, y_train)
 
 
 # Checking If classes are balanced:
 
-# In[204]:
+# In[20]:
 
 
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_rus)[0], Counter(y_rus)[1]], color=['b','r'])
@@ -225,13 +249,15 @@ plt.tight_layout()
 plt.show()
 
 
-# In[205]:
+# In[21]:
 
 
 assert Counter(y_rus)[1] == Counter(y_train)[1] #Checking if they have the same number of fraud cases
 
 
-# ### Random oversampling
+# <a id='ros'></a>
+
+# ## Random oversampling
 
 # In[22]:
 
@@ -248,8 +274,8 @@ X_ros, y_ros = ros.fit_resample(X_train, y_train)
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_ros)[0], Counter(y_ros)[1]], color=['b','r'])
 plt.xlabel('Class')
 plt.ylabel('Number of transactions')
-plt.annotate('{}'.format(Counter(y_ros)[0]), (0.25, 0.45), xycoords='axes fraction')
-plt.annotate('{}'.format(Counter(y_ros)[1]), (0.75, 0.45), xycoords='axes fraction')
+plt.annotate('{}'.format(Counter(y_ros)[0]), (0.20, 0.45), xycoords='axes fraction')
+plt.annotate('{}'.format(Counter(y_ros)[1]), (0.70, 0.45), xycoords='axes fraction')
 
 plt.tight_layout()
 plt.show()
@@ -261,7 +287,9 @@ plt.show()
 assert Counter(y_ros)[0] == Counter(y_train)[0] #Checking if they have the same number of non-fraud cases
 
 
-# ### Synthetic Minority Over-sampling (SMOTE)
+# <a id='smote'></a>
+
+# ## Synthetic Minority Over-sampling (SMOTE)
 
 # A quick explanation of how SMOTE works: it consists of synthesizing elements for the minority class using the existing ones. It randomly chooses a point from the minority class and computes the k-nearest neighbors (default = 5) for this point. The synthetic points are added between the chosen point and its neighbors by choosing a factor between 0 and 1 to multiply the distance. This process can be seen below.
 
@@ -282,8 +310,8 @@ X_smote, y_smote = smote.fit_resample(X_train, y_train)
 plt.bar(['Non-Fraud','Fraud'], [Counter(y_smote)[0], Counter(y_smote)[1]], color=['b','r'])
 plt.xlabel('Class')
 plt.ylabel('Number of transactions')
-plt.annotate('{}'.format(Counter(y_smote)[0]), (0.25, 0.45), xycoords='axes fraction')
-plt.annotate('{}'.format(Counter(y_smote)[1]), (0.75, 0.45), xycoords='axes fraction')
+plt.annotate('{}'.format(Counter(y_smote)[0]), (0.20, 0.45), xycoords='axes fraction')
+plt.annotate('{}'.format(Counter(y_smote)[1]), (0.70, 0.45), xycoords='axes fraction')
 
 plt.tight_layout()
 plt.show()
@@ -295,7 +323,9 @@ plt.show()
 assert Counter(y_smote)[0] == Counter(y_train)[0] #Checking if they have the same number of non-fraud cases
 
 
-# #### Checking the difference between random oversampling and SMOTE
+# <a id='rosxsmote'></a>
+
+# ### Checking the difference between random oversampling and SMOTE
 
 # In[28]:
 
@@ -316,8 +346,6 @@ def plot_2d_space(X, y, label='Classes'):
 # In[29]:
 
 
-std_scale = StandardScaler().fit(X_train)
-
 pca = PCA(n_components=2)
 X_ros_pca = pca.fit_transform(X_ros)
 X_smote_pca = pca.fit_transform(X_smote)
@@ -328,11 +356,13 @@ plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using S
 
 # If you look closely, you can see that some of the observations tagged as 1 (fraudulent transactions) are present in different coordinates on the graphs above. This is due to the new fraudulent observations created by the SMOTE algorithm.
 
-# # Models
+# <a id='models'></a>
+
+# # Models and Results
 
 # Before we begin let's first create a function to perform feature scaling because some models need this prior to fitting.
 
-# In[30]:
+# In[ ]:
 
 
 def feature_scaling(X_train, X_test=X_test):
@@ -342,7 +372,7 @@ def feature_scaling(X_train, X_test=X_test):
     return X_train_std, X_test_std
 
 
-# In[31]:
+# In[ ]:
 
 
 X_train_rus_std, X_test_rus_std = feature_scaling(X_rus)
@@ -350,23 +380,23 @@ X_train_ros_std, X_test_ros_std = feature_scaling(X_ros)
 X_train_smote_std, X_test_smote_std = feature_scaling(X_smote)
 
 
-# In[65]:
+# In[ ]:
 
 
 classifiers = []
 
 classifiers.append(('Logistic Regression', LogisticRegression(random_state=42)))
 classifiers.append(('Naive Bayes', GaussianNB()))
-#classifiers.append(('KNN', KNeighborsClassifier()))
-#classifiers.append(('SVM', SVC(random_state=42, probability=True)))
-classifiers.append(('Decision Tree', DecisionTreeClassifier(random_state=42)))
+classifiers.append(('KNN', KNeighborsClassifier()))
+#classifiers.append(('SVM', SVC(random_state=42, probability=True))) #This one takes a very long time to run!
+#classifiers.append(('Decision Tree', DecisionTreeClassifier(random_state=42))) #Always worse than random forest for this data
 classifiers.append(('Random Forest', RandomForestClassifier(random_state=42)))
 
 #Ensemble classifier
-eclf = VotingClassifier(estimators=classifiers, voting='soft', weights=[1, 1, 1, 5])
+eclf = VotingClassifier(estimators=classifiers, voting='soft', weights=np.ones(len(classifiers)))
 
 
-# In[147]:
+# In[ ]:
 
 
 def plot_confusion_matrix(cm, classes,
@@ -403,7 +433,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-# In[198]:
+# In[ ]:
 
 
 from sklearn import svm
@@ -411,8 +441,8 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 from scipy import interp
 
-def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
-    '''Plots the ROC curve with cross validation'''
+def plot_CM_and_ROC_curve(classifier, X_train, y_train, X_test, y_test, cv_n_splits=5):
+    '''Plots the ROC curve with cross validation and the confusion matrix.'''
     
     # Classification and ROC analysis
 
@@ -427,9 +457,9 @@ def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
     class_names = ['Non-Fraud', 'Fraud']
     confusion_matrix_total = [[0, 0], [0, 0]]
 
-    i = 0
+    #i = 0
 
-    for train, test in cv.split(X, y):
+    '''for train, test in cv.split(X, y):
         
         X_train, X_test = X[train], X[test]
         y_train, y_test = y[train], y[test]
@@ -446,14 +476,29 @@ def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
         tprs[-1][0] = 0.0
         roc_auc = auc(fpr, tpr)
         aucs.append(roc_auc)
-        plt.plot(fpr, tpr, lw=1, alpha=0.3, label='ROC fold %d (AUC = %0.7f)' % (i+1, roc_auc))
+        plt.plot(fpr, tpr, lw=1, alpha=0.3, label='ROC fold %d (AUC = %0.7f)' % (i+1, roc_auc))'''
         
-        i += 1
+    probas_ = classifier.fit(X_train, y_train).predict_proba(X_test)
+    # Compute ROC curve and area the curve
+    fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
+    tprs.append(interp(mean_fpr, fpr, tpr))
+    tprs[-1][0] = 0.0
+    roc_auc = auc(fpr, tpr)
+    aucs.append(roc_auc)
+    plt.plot(fpr, tpr, lw=1, alpha=1, color='b', label='ROC (AUC = %0.7f)' % (roc_auc))
+    
+    y_pred=classifier.predict(X_test)
+    cnf_matrix = confusion_matrix(y_test, y_pred)
+    confusion_matrix_total += cnf_matrix
+    np.set_printoptions(precision=2)
+        
+    #i += 1
+    
         
     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
              label='Chance', alpha=.8)
 
-    mean_tpr = np.mean(tprs, axis=0)
+    '''mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
     mean_auc = auc(mean_fpr, mean_tpr)
     std_auc = np.std(aucs)
@@ -465,7 +510,7 @@ def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
     tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
     tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
     plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                     label='$\pm$ 1 std. dev.')
+                     label='$\pm$ 1 std. dev.')'''
 
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
@@ -489,47 +534,53 @@ def plot_CM_and_ROC_curve(classifier, X, y, cv_n_splits=5):
     plt.show()
 
 
-# #### Results using random undersampling
+# <a id='models-rus'></a>
 
-# In[199]:
+# ## Results using random undersampling
 
-
-for clf in classifiers:
-    plot_CM_and_ROC_curve(clf, X_train_rus_std, y_rus) 
-
-
-# In[200]:
-
-
-plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus)
-
-
-# #### Results using oversampling
-
-# In[201]:
+# In[ ]:
 
 
 for clf in classifiers:
-    plot_CM_and_ROC_curve(clf, X_train_ros_std, y_ros)
+    plot_CM_and_ROC_curve(clf, X_train_rus_std, y_rus, X_test_rus_std, y_test)
 
 
-# In[73]:
+# In[ ]:
 
 
-plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus, X_test_rus_std, y_test)
 
 
-# #### Results using SMOTE
+# <a id='models-ros'></a>
 
-# In[74]:
+# ## Results using oversampling
+
+# In[ ]:
 
 
 for clf in classifiers:
-    plot_CM_and_ROC_curve(clf, X_train_smote_std, y_smote)
+    plot_CM_and_ROC_curve(clf, X_train_ros_std, y_ros, X_test_ros_std, y_test)
 
 
-# In[75]:
+# In[ ]:
 
 
-plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_smote_std, y_smote)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros, X_test_ros_std, y_test)
+
+
+# <a id='models-smote'></a>
+
+# ## Results using SMOTE
+
+# In[ ]:
+
+
+for clf in classifiers:
+    plot_CM_and_ROC_curve(clf, X_train_smote_std, y_smote, X_test_smote_std, y_test)
+
+
+# In[ ]:
+
+
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_smote_std, y_smote, X_test_smote_std, y_test)
 
