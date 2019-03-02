@@ -11780,20 +11780,24 @@ div#notebook {
 </li>
 <li><p><a href="#Balancing">Balancing the classes</a></p>
 <ul>
-<li><a href="#rus">Random Under Sampling</a></li>
-<li><a href="#ros">Random Over Sampling</a> </li>
+<li><a href="#rus">Random Undersampling</a></li>
+<li><a href="#ros">Random Oversampling</a> </li>
 <li><a href="#smote">SMOTE</a><ul>
 <li><a href="#rosxsmote">Checking the difference between random oversampling and SMOTE</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li><p><a href="#metrics">Metrics</a></p>
+</li>
 <li><p><a href="#models">Models and Results</a></p>
 <ul>
-<li><a href="#models-rus">Results using random under sampling</a></li>
-<li><a href="#models-ros">Results using random over sampling</a></li>
+<li><a href="#models-rus">Results using random undersampling</a></li>
+<li><a href="#models-ros">Results using random oversampling</a></li>
 <li><a href="#models-smote">Results using SMOTE</a></li>
 </ul>
+</li>
+<li><p><a href="#conclusions">Conclusions</a></p>
 </li>
 </ul>
 
@@ -12850,6 +12854,15 @@ Number of outliers above the upper bound:  31904  (11.2%)
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The next two plots show that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.</p>
+
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[12]:</div>
@@ -12977,7 +12990,7 @@ Name: Amount, dtype: float64</pre>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We can see that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.</p>
+<p>We can see below that all features have very low correlation coefficients among each other, and especially low correlation with the 'Class' feature. This was already expected since the data was processed using PCA.</p>
 
 </div>
 </div>
@@ -13059,15 +13072,6 @@ Name: Amount, dtype: float64</pre>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We can see that all features have very low correlation coefficients among each other, and especially low correlation with the 'Class' feature. This was already expected since the data was processed using PCA.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
 <p><a id='Balancing'></a></p>
 
 </div>
@@ -13121,7 +13125,7 @@ Name: Amount, dtype: float64</pre>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The data was split in train and test sets maintaining the original rate of frauds to non-frauds in each set by using 'stratify=y' in the function train_test_split.</p>
+<p>The data was split in train and test sets maintaining the original rate of frauds to non-frauds observations in each set by using 'stratify=y' in the function train_test_split.</p>
 
 </div>
 </div>
@@ -13618,6 +13622,37 @@ Name: Amount, dtype: float64</pre>
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Now we can clearly see that new the observations tagged as 1 (fraudulent transactions) are present in different coordinates on the graphs above. This is the SMOTE algorithm works.</p>
 <p>Also, by applying the PCA we can visualize the data in 2D and now we can see that the patterns for fraud and non-fraud transactions are distinct and each class has its own cluster.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a id='metrics'></a></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Metrics">Metrics<a class="anchor-link" href="#Metrics">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Usually accuracy is the first metric that comes to mind when someone is assessing a model performance. However, we have to be careful. The data in this case is highly unbalanced, so accuracy is not a good metric at all. If we created a model that always classifies a transaction as non-fraudulent, we would have an astonishing accuracy of 99.83%! So, what is the solution? We have to use other metrics to consider a model as good or bad.</p>
+<p>The metrics to be used will be the <a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve">Area Under the ROC curve</a> (also called AUC), and the <a href="https://en.wikipedia.org/wiki/Precision_and_recall">recall and precision</a> scores obtained from the confusion matrix.</p>
+<p>The ROC curve is a plot with the true positive rate on the y-axis and false positive rate on the x-axis. The true positive rate answers the question "When the actual classification is positive, how often does the classifier predict positive?" and the false positive rate answers the question "When the actual classification is negative, how ofter does the classifier incorrectly predict positive?"</p>
+<p>The AUC shows how good the classifier is in separating the classes. The closer to 1, the better is the classifier.</p>
+<p>Precision answers the question "what proportion of positive identifications was actually correct?" and recall answers "what proportion of actual positives was identified correctly?"</p>
+<p>With these 3 metrics the we are able to tell whether the model performance is good or poor.</p>
 
 </div>
 </div>
@@ -14725,6 +14760,23 @@ Recall = 81.76%
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a id='conclusions'></a></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Conclusions">Conclusions<a class="anchor-link" href="#Conclusions">&#182;</a></h1>
+</div>
+</div>
 </div>
     </div>
   </div>

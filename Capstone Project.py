@@ -6,16 +6,19 @@
 # 
 # - [Balancing the classes](#Balancing)
 # 
-#     - [Random Under Sampling](#rus)
-#     - [Random Over Sampling](#ros) 
+#     - [Random Undersampling](#rus)
+#     - [Random Oversampling](#ros) 
 #     - [SMOTE](#smote)
 #         - [Checking the difference between random oversampling and SMOTE](#rosxsmote)
 # 
+# - [Metrics](#metrics)
+# 
 # - [Models and Results](#models)
-#     - [Results using random under sampling](#models-rus)
-#     - [Results using random over sampling](#models-ros)
+#     - [Results using random undersampling](#models-rus)
+#     - [Results using random oversampling](#models-ros)
 #     - [Results using SMOTE](#models-smote)
 # 
+# - [Conclusions](#conclusions)
 
 # In[1]:
 
@@ -147,6 +150,8 @@ table[table['Class']==1].where(table['Amount']>upper_bound).count()['Amount']
 
 # In addition to that, only 91 out of 31904 outliers are classified as frauds.
 
+# The next two plots show that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.
+
 # In[12]:
 
 
@@ -177,7 +182,7 @@ plt.show()
 table.loc[table['Class'] == 1]['Amount'].describe()
 
 
-# We can see that fraudulent transactions are highly concentrated at smaller values when compared to non-fraudulent transactions.
+# We can see below that all features have very low correlation coefficients among each other, and especially low correlation with the 'Class' feature. This was already expected since the data was processed using PCA.
 
 # In[15]:
 
@@ -193,8 +198,6 @@ table.corrwith(table.Class, method='spearman').plot.bar(
         rot = 45, grid = True, color=['blue'])
 plt.show()
 
-
-# We can see that all features have very low correlation coefficients among each other, and especially low correlation with the 'Class' feature. This was already expected since the data was processed using PCA.
 
 # <a id='Balancing'></a>
 
@@ -215,7 +218,7 @@ X = table.drop(columns=['Class'])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, stratify=y, random_state=42)
 
 
-# The data was split in train and test sets maintaining the original rate of frauds to non-frauds in each set by using 'stratify=y' in the function train_test_split.
+# The data was split in train and test sets maintaining the original rate of frauds to non-frauds observations in each set by using 'stratify=y' in the function train_test_split.
 
 # We are going to test three types of resampling methods: [random undersampling](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.under_sampling.RandomUnderSampler.html#imblearn.under_sampling.RandomUnderSampler), [random oversampling](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.over_sampling.RandomOverSampler.html#imblearn.over_sampling.RandomOverSampler) and [Synthetic Minority Over-sampling (SMOTE)](https://imbalanced-learn.readthedocs.io/en/stable/generated/imblearn.over_sampling.SMOTE.html#imblearn.over_sampling.SMOTE). The image below depicts how undersampling and oversampling works and it is very intuitive to understand. SMOTE is similar to oversampling but instead of copying the same original points randomly, the algorithm creates new points close to the original ones.
 
@@ -386,6 +389,22 @@ plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using S
 # 
 # Also, by applying the PCA we can visualize the data in 2D and now we can see that the patterns for fraud and non-fraud transactions are distinct and each class has its own cluster.
 
+# <a id='metrics'></a>
+
+# # Metrics
+
+# Usually accuracy is the first metric that comes to mind when someone is assessing a model performance. However, we have to be careful. The data in this case is highly unbalanced, so accuracy is not a good metric at all. If we created a model that always classifies a transaction as non-fraudulent, we would have an astonishing accuracy of 99.83%! So, what is the solution? We have to use other metrics to consider a model as good or bad.
+# 
+# The metrics to be used will be the [Area Under the ROC curve](https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve) (also called AUC), and the [recall and precision](https://en.wikipedia.org/wiki/Precision_and_recall) scores obtained from the confusion matrix.
+# 
+# The ROC curve is a plot with the true positive rate on the y-axis and false positive rate on the x-axis. The true positive rate answers the question "When the actual classification is positive, how often does the classifier predict positive?" and the false positive rate answers the question "When the actual classification is negative, how ofter does the classifier incorrectly predict positive?"
+# 
+# The AUC shows how good the classifier is in separating the classes. The closer to 1, the better is the classifier.
+# 
+# Precision answers the question "what proportion of positive identifications was actually correct?" and recall answers "what proportion of actual positives was identified correctly?"
+# 
+# With these 3 metrics the we are able to tell whether the model performance is good or poor.
+
 # <a id='models'></a>
 
 # # Models and Results
@@ -551,3 +570,7 @@ for clf in classifiers:
 
 plot_CM_and_ROC_curve(('Ensemble model', eclf), X_smote_std, y_smote, X_test_smote_std, y_test)
 
+
+# <a id='conclusions'></a>
+
+# # Conclusions
