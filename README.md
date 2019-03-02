@@ -29,7 +29,7 @@ represents the class labelling, it takes value 1 in case of fraud and 0 otherwis
 The objective was to create simple and commonly used machine learning models like logistic regression, KNN, random
 forest and maybe others to compare how they perform regarding the metric
 chosen (AUC) for the task of predicting fraudulent credit card transactions. After
-that, I created an ensemble model that combines the answers provided by the simple models as a way of further enhancing the result.
+that, I created an ensemble model that combines the predictions provided by the simple models as a way of further enhancing the performance.
 
 ## Installing Python packages
 
