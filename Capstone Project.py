@@ -327,7 +327,41 @@ assert Counter(y_smote)[0] == Counter(y_train)[0] #Checking if they have the sam
 
 # ### Checking the difference between random oversampling and SMOTE
 
+# Because the dataset has many features and our graphs will be 2D, we will reduce the size of the dataset using Principal Component Analysis (PCA). But before using PCA, it is recommended to scale the features.
+
+# Let's create a function to perform feature scaling because some models need this prior to fitting and we can use it more than one time.
+
 # In[28]:
+
+
+def feature_scaling(X, X_test=X_test):
+    std_scale = StandardScaler().fit(X)
+    X_std = std_scale.transform(X)
+    X_test_std = std_scale.transform(X_test)
+    return X_std, X_test_std
+
+
+# Transforming all the sets using different types of sampling:
+
+# In[29]:
+
+
+X_rus_std, X_test_rus_std = feature_scaling(X_rus)
+X_ros_std, X_test_ros_std = feature_scaling(X_ros)
+X_smote_std, X_test_smote_std = feature_scaling(X_smote)
+
+
+# In[30]:
+
+
+pca = PCA(n_components=2)
+X_ros_pca = pca.fit_transform(X_ros_std)
+X_smote_pca = pca.fit_transform(X_smote_std)
+
+
+# Creating a function to visualize the data distribution after the PCA.
+
+# In[31]:
 
 
 def plot_2d_space(X, y, label='Classes'):
@@ -341,46 +375,24 @@ def plot_2d_space(X, y, label='Classes'):
     plt.show()
 
 
-# Because the dataset has many features and our graphs will be 2D, we will reduce the size of the dataset using Principal Component Analysis (PCA):
+# In[32]:
 
-# In[29]:
-
-
-pca = PCA(n_components=2)
-X_ros_pca = pca.fit_transform(X_ros)
-X_smote_pca = pca.fit_transform(X_smote)
 
 plot_2d_space(X_ros_pca, y_ros, 'Balanced dataset (2 PCA components) using random oversampling')
 plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using SMOTE')
 
 
-# If you look closely, you can see that some of the observations tagged as 1 (fraudulent transactions) are present in different coordinates on the graphs above. This is due to the new fraudulent observations created by the SMOTE algorithm.
+# Now we can clearly see that new the observations tagged as 1 (fraudulent transactions) are present in different coordinates on the graphs above. This is the SMOTE algorithm works.
+# 
+# Also, by applying the PCA we can visualize the data in 2D and now we can see that the patterns for fraud and non-fraud transactions are distinct and each class has its own cluster.
 
 # <a id='models'></a>
 
 # # Models and Results
 
-# Before we begin let's first create a function to perform feature scaling because some models need this prior to fitting.
+# The models to be used are shown below. There are also functions to plot the confusion matrix and the ROC curve for the models.
 
-# In[ ]:
-
-
-def feature_scaling(X_train, X_test=X_test):
-    std_scale = StandardScaler().fit(X_train)
-    X_train_std = std_scale.transform(X_train)
-    X_test_std = std_scale.transform(X_test)
-    return X_train_std, X_test_std
-
-
-# In[ ]:
-
-
-X_train_rus_std, X_test_rus_std = feature_scaling(X_rus)
-X_train_ros_std, X_test_ros_std = feature_scaling(X_ros)
-X_train_smote_std, X_test_smote_std = feature_scaling(X_smote)
-
-
-# In[ ]:
+# In[33]:
 
 
 classifiers = []
@@ -389,14 +401,14 @@ classifiers.append(('Logistic Regression', LogisticRegression(random_state=42)))
 classifiers.append(('Naive Bayes', GaussianNB()))
 classifiers.append(('KNN', KNeighborsClassifier()))
 #classifiers.append(('SVM', SVC(random_state=42, probability=True))) #This one takes a very long time to run!
-#classifiers.append(('Decision Tree', DecisionTreeClassifier(random_state=42))) #Always worse than random forest for this data
+classifiers.append(('Decision Tree', DecisionTreeClassifier(random_state=42)))
 classifiers.append(('Random Forest', RandomForestClassifier(random_state=42)))
 
-#Ensemble classifier
+#Ensemble classifier - All classifiers have the same weight
 eclf = VotingClassifier(estimators=classifiers, voting='soft', weights=np.ones(len(classifiers)))
 
 
-# In[ ]:
+# In[39]:
 
 
 def plot_confusion_matrix(cm, classes,
@@ -433,7 +445,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-# In[ ]:
+# In[40]:
 
 
 from sklearn import svm
@@ -442,76 +454,24 @@ from sklearn.model_selection import StratifiedKFold
 from scipy import interp
 
 def plot_CM_and_ROC_curve(classifier, X_train, y_train, X_test, y_test, cv_n_splits=5):
-    '''Plots the ROC curve with cross validation and the confusion matrix.'''
+    '''Plots the ROC curve and the confusion matrix, and calculates AUC, recall and precision.'''
     
-    # Classification and ROC analysis
-
-    # Run classifier with cross-validation and plot ROC curves
-    cv = StratifiedKFold(n_splits=cv_n_splits, random_state=42)
     name = classifier[0]
     classifier = classifier[1]
 
-    tprs = []
-    aucs = []
     mean_fpr = np.linspace(0, 1, 100)
     class_names = ['Non-Fraud', 'Fraud']
     confusion_matrix_total = [[0, 0], [0, 0]]
-
-    #i = 0
-
-    '''for train, test in cv.split(X, y):
-        
-        X_train, X_test = X[train], X[test]
-        y_train, y_test = y[train], y[test]
-
-        y_pred=classifier.predict(X_test)
-        cnf_matrix = confusion_matrix(y_test, y_pred)
-        confusion_matrix_total += cnf_matrix
-        np.set_printoptions(precision=2)
-        
-        probas_ = classifier.fit(X_train, y_train).predict_proba(X_test)
-        # Compute ROC curve and area the curve
-        fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
-        tprs.append(interp(mean_fpr, fpr, tpr))
-        tprs[-1][0] = 0.0
-        roc_auc = auc(fpr, tpr)
-        aucs.append(roc_auc)
-        plt.plot(fpr, tpr, lw=1, alpha=0.3, label='ROC fold %d (AUC = %0.7f)' % (i+1, roc_auc))'''
-        
+    
+    #Obtain probabilities for each class
     probas_ = classifier.fit(X_train, y_train).predict_proba(X_test)
+    
     # Compute ROC curve and area the curve
     fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
-    tprs.append(interp(mean_fpr, fpr, tpr))
-    tprs[-1][0] = 0.0
     roc_auc = auc(fpr, tpr)
-    aucs.append(roc_auc)
     plt.plot(fpr, tpr, lw=1, alpha=1, color='b', label='ROC (AUC = %0.7f)' % (roc_auc))
-    
-    y_pred=classifier.predict(X_test)
-    cnf_matrix = confusion_matrix(y_test, y_pred)
-    confusion_matrix_total += cnf_matrix
-    np.set_printoptions(precision=2)
-        
-    #i += 1
-    
-        
     plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
              label='Chance', alpha=.8)
-
-    '''mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    mean_auc = auc(mean_fpr, mean_tpr)
-    std_auc = np.std(aucs)
-    plt.plot(mean_fpr, mean_tpr, color='b',
-             label='Mean ROC (AUC = %0.7f $\pm$ %0.7f)' % (mean_auc, std_auc),
-             lw=2, alpha=.8)
-
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                     label='$\pm$ 1 std. dev.')'''
-
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
     plt.xlabel('False Positive Rate')
@@ -520,15 +480,22 @@ def plot_CM_and_ROC_curve(classifier, X_train, y_train, X_test, y_test, cv_n_spl
     plt.legend(loc="lower right")
     plt.show()
     
+    #Store the confusion matrix result to plot a table later
+    y_pred=classifier.predict(X_test)
+    cnf_matrix = confusion_matrix(y_test, y_pred)
+    confusion_matrix_total += cnf_matrix
+    
     #Print precision and recall
     tn, fp = confusion_matrix_total.tolist()[0]
     fn, tp = confusion_matrix_total.tolist()[1]
+    accuracy = (tp+tn)/(tp+tn+fp+fn)
     precision = tp/(tp+fp)
     recall = tp/(tp+fn)
+    print('Accuracy = {:2.2f}%'.format(accuracy*100))
     print('Precision = {:2.2f}%'.format(precision*100))
     print('Recall = {:2.2f}%'.format(recall*100))
     
-    # Plot non-normalized confusion matrix
+    # Plot confusion matrix
     plt.figure()
     plot_confusion_matrix(confusion_matrix_total, classes=class_names, title='Confusion matrix - model: ' + name)
     plt.show()
@@ -538,49 +505,49 @@ def plot_CM_and_ROC_curve(classifier, X_train, y_train, X_test, y_test, cv_n_spl
 
 # ## Results using random undersampling
 
-# In[ ]:
+# In[41]:
 
 
 for clf in classifiers:
-    plot_CM_and_ROC_curve(clf, X_train_rus_std, y_rus, X_test_rus_std, y_test)
+    plot_CM_and_ROC_curve(clf, X_rus_std, y_rus, X_test_rus_std, y_test)
 
 
-# In[ ]:
+# In[42]:
 
 
-plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_rus_std, y_rus, X_test_rus_std, y_test)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_rus_std, y_rus, X_test_rus_std, y_test)
 
 
 # <a id='models-ros'></a>
 
 # ## Results using oversampling
 
-# In[ ]:
+# In[43]:
 
 
 for clf in classifiers:
-    plot_CM_and_ROC_curve(clf, X_train_ros_std, y_ros, X_test_ros_std, y_test)
+    plot_CM_and_ROC_curve(clf, X_ros_std, y_ros, X_test_ros_std, y_test)
 
 
-# In[ ]:
+# In[44]:
 
 
-plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_ros_std, y_ros, X_test_ros_std, y_test)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_ros_std, y_ros, X_test_ros_std, y_test)
 
 
 # <a id='models-smote'></a>
 
 # ## Results using SMOTE
 
-# In[ ]:
+# In[45]:
 
 
 for clf in classifiers:
-    plot_CM_and_ROC_curve(clf, X_train_smote_std, y_smote, X_test_smote_std, y_test)
+    plot_CM_and_ROC_curve(clf, X_smote_std, y_smote, X_test_smote_std, y_test)
 
 
-# In[ ]:
+# In[46]:
 
 
-plot_CM_and_ROC_curve(('Ensemble model', eclf), X_train_smote_std, y_smote, X_test_smote_std, y_test)
+plot_CM_and_ROC_curve(('Ensemble model', eclf), X_smote_std, y_smote, X_test_smote_std, y_test)
 
