@@ -106,7 +106,7 @@ plt.tight_layout()
 plt.show()
 
 
-# The dataset has only two classes: fraud or non-fraud. The classes are highly umbalanced with 99.83% of observations belonging to non-fraudulent transactions and only 0.17% of observations labeled as fraudulent. This issue will be adressed later with a method for balancing classes.
+# The dataset has only two classes: fraud or non-fraud. The classes are highly imbalanced with 99.83% of observations belonging to non-fraudulent transactions and only 0.17% of observations labeled as fraudulent. This issue will be adressed later with a method for balancing classes.
 
 # In[9]:
 
@@ -140,7 +140,7 @@ print('Number of outliers above the upper bound: ', amount[amount['Amount'] > up
       ' ({:.4}%)'.format(amount[amount['Amount'] > upper_bound].count()[0] / amount['Amount'].count() * 100))
 
 
-# 31904 outliers found using the interquartile range method, which represents 11.2% of the observations. Removing them from the dataset would be a bad idea due to the loss of a large amount of information for the machine learning models.
+# The interquartile range method found 31904 outliers, which represents 11.2% of the observations. Removing them from the dataset would be a bad idea due to the loss of a large amount of information for the machine learning models.
 
 # In[11]:
 
@@ -393,17 +393,17 @@ plot_2d_space(X_smote_pca, y_smote, 'Balanced dataset (2 PCA components) using S
 
 # # Metrics
 
-# Usually accuracy is the first metric that comes to mind when someone is assessing a model performance. However, we have to be careful. The data in this case is highly unbalanced, so accuracy is not a good metric at all. If we created a model that always classifies a transaction as non-fraudulent, we would have an astonishing accuracy of 99.83%! So, what is the solution? We have to use other metrics to consider a model as good or bad.
+# Usually accuracy is the first metric that comes to mind when someone is assessing a model performance. However, we must be careful. The data in this case is highly unbalanced, so accuracy is not a good metric at all. If we created a model that always classifies a transaction as non-fraudulent, we would have an astonishing accuracy of 99.83%! So, what is the solution? We should use other metrics to consider a model as good or bad.
 # 
 # The metrics to be used will be the [Area Under the ROC curve](https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve) (also called AUC), and the [recall and precision](https://en.wikipedia.org/wiki/Precision_and_recall) scores obtained from the confusion matrix.
 # 
-# The ROC curve is a plot with the true positive rate on the y-axis and false positive rate on the x-axis. The true positive rate answers the question "When the actual classification is positive, how often does the classifier predict positive?" and the false positive rate answers the question "When the actual classification is negative, how ofter does the classifier incorrectly predict positive?"
+# The ROC curve is a plot with the true positive rate on the y-axis and false positive rate on the x-axis. The true positive rate answers the question "When the actual classification is positive, how often does the classifier predict positive?" and the false positive rate answers the question "When the actual classification is negative, how often does the classifier incorrectly predict positive?"
 # 
 # The AUC shows how good the classifier is in separating the classes. The closer to 1, the better is the classifier.
 # 
 # Precision answers the question "what proportion of positive identifications was actually correct?" and recall answers "what proportion of actual positives was identified correctly?"
 # 
-# With these 3 metrics the we are able to tell whether the model performance is good or poor.
+# With these 3 metrics the we can to tell whether the model performance is good or poor.
 
 # <a id='models'></a>
 
