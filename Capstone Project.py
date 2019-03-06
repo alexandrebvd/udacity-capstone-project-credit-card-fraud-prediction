@@ -474,7 +474,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 from scipy import interp
 
-def plot_CM_and_ROC_curve(classifier, X_train, y_train, X_test, y_test, cv_n_splits=5):
+def plot_CM_and_ROC_curve(classifier, X_train, y_train, X_test, y_test):
     '''Plots the ROC curve and the confusion matrix, and calculates AUC, recall and precision.'''
     
     name = classifier[0]

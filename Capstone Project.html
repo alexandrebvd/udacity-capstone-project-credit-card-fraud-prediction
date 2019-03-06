@@ -13769,7 +13769,7 @@ Name: Amount, dtype: float64</pre>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">StratifiedKFold</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">interp</span>
 
-<span class="k">def</span> <span class="nf">plot_CM_and_ROC_curve</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">cv_n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">plot_CM_and_ROC_curve</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Plots the ROC curve and the confusion matrix, and calculates AUC, recall and precision.&#39;&#39;&#39;</span>
     
     <span class="n">name</span> <span class="o">=</span> <span class="n">classifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
