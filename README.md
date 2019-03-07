@@ -31,6 +31,14 @@ forest and maybe others to compare how they perform regarding the metric
 chosen (AUC) for the task of predicting fraudulent credit card transactions. After
 that, I created an ensemble model that combines the predictions provided by the simple models as a way of further enhancing the performance.
 
+## Main files
+
+- Capstone Proposal - Alexandre Daltro.pdf: Project proposal before implementing it
+- Udacity Review - Capstone Proposal.pdf: Proposal review by Udacity
+- Capstone Project - Credit Card Fraud Prediction - Alexandre Daltro.pdf: Project report
+- Capstone Project.ipynb: Complete project developed in Jupyter Notebook
+- creditcard.rar: Dataset used in this project
+
 ## Installing Python packages
 
 Python is available for all three major operating systems — Microsoft Windows, macOS, and Linux — and the installer, as well as the documentation, can be downloaded from the official Python website: https://www.python.org.
