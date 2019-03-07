@@ -37,6 +37,7 @@ that, I created an ensemble model that combines the predictions provided by the 
 - Udacity Review - Capstone Proposal.pdf: Proposal review by Udacity
 - Capstone Project - Credit Card Fraud Prediction - Alexandre Daltro.pdf: Project report
 - Capstone Project.ipynb: Complete project developed in Jupyter Notebook
+- Udacity Review - Capstone Project.pdf: Project review by Udacity
 - creditcard.rar: Dataset used in this project
 
 ## Installing Python packages
